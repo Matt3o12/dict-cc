@@ -20,17 +20,24 @@ const (
 
 // A Language which includes the localized (English) and native
 // version of the language
-type Language struct {
-	native string
-}
+type Language string
 
 // A LanguagePair consists of two langauges.
 type LanguagePair struct {
 	first, second Language
 }
 
-func (l Language) String() string {
-	return l.native
+// Same checks whether the current language pair equals the other one.
+// it swaps the first and second language if necessary.
+func (l LanguagePair) Same(other LanguagePair) bool {
+	first1, second1 := l.first, l.second
+	first2, second2 := other.first, other.second
+	if first1 != first2 {
+		// Swapping first1 and first2
+		first2, first1 = first1, first2
+	}
+
+	return (first1 == first2 && second1 == second2) || (first1 == second1 && first2 == second2)
 }
 
 func (l LanguagePair) String() string {
@@ -75,9 +82,8 @@ func getLanguagePairByString(s string) (*LanguagePair, error) {
 			"Are you using the latest version?", s)
 	}
 
-	first := Language{strings.TrimSpace(split[0])}
-	second := Language{strings.TrimSpace(split[1])}
-
+	first := Language(strings.TrimSpace(split[0]))
+	second := Language(strings.TrimSpace(split[1]))
 	pair := &LanguagePair{first, second}
 	return pair, nil
 }
