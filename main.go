@@ -15,7 +15,8 @@ func updateLanguages() {
 	langs, err := GetLanguages()
 	if err != nil {
 		fmt.Println(err)
-		fmt.Printf("If you believe that is a bug, please open a ticket at %v.\n", issueTracker)
+		fmt.Printf("If you believe that is a bug, please open a ticket at %v.\n",
+			issueTracker)
 		return
 	}
 

@@ -14,7 +14,8 @@ const (
 	// AllLangaugesGet URL where all available langauge pairs can be found.
 	AllLangaugesGet = "http://browse.dict.cc/"
 
-	allAvaiableLangsCSSPath = "#maincontent form[name='langbarchooser'] table td a"
+	allAvaiableLangsCSSPath = "#maincontent form[name='langbarchooser'] " +
+		"table td a"
 )
 
 // A Language which includes the localized (English) and native
@@ -70,7 +71,8 @@ func getLanguagePairByString(s string) (*LanguagePair, error) {
 	split := strings.Split(s, "–") // that's not the normal hython.
 	if len(split) != 2 {
 		fmt.Println(split)
-		return nil, fmt.Errorf("Unkown language format: '%v'. Are you using the latest version?", s)
+		return nil, fmt.Errorf("Unkown language format: '%v'. "+
+			"Are you using the latest version?", s)
 	}
 
 	first := Language{strings.TrimSpace(split[0])}
