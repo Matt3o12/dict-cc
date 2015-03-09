@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"net/http"
 	"strings"
 
 	"github.com/PuerkitoBio/goquery"
@@ -45,10 +46,9 @@ func (l LanguagePair) String() string {
 }
 
 // GetLanguages returns all avaiable
-// languages found on AllLangaugesGet.
-func GetLanguages() ([]LanguagePair, error) {
-	doc, err := goquery.NewDocument(AllLangaugesGet)
-
+// languages found in the response.
+func GetLanguages(response *http.Response) ([]LanguagePair, error) {
+	doc, err := goquery.NewDocumentFromResponse(response)
 	if err != nil {
 		return nil, err
 	}
@@ -58,7 +58,7 @@ func GetLanguages() ([]LanguagePair, error) {
 
 	doc.Find(allAvaiableLangsCSSPath).Each(
 		func(i int, s *goquery.Selection) {
-			lang, err := getLanguagePairByString(s.Text())
+			lang, err := getLanguagePairFromString(s.Text())
 			if err != nil {
 				langErr = &err
 				return
@@ -74,10 +74,9 @@ func GetLanguages() ([]LanguagePair, error) {
 	return pairs, nil
 }
 
-func getLanguagePairByString(s string) (*LanguagePair, error) {
-	split := strings.Split(s, "–") // that's not the normal hython.
+func getLanguagePairFromString(s string) (*LanguagePair, error) {
+	split := strings.Split(s, "–") // that's not a normal hython ('-').
 	if len(split) != 2 {
-		fmt.Println(split)
 		return nil, fmt.Errorf("Unkown language format: '%v'. "+
 			"Are you using the latest version?", s)
 	}
