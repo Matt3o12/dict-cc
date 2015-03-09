@@ -7,6 +7,15 @@ import (
 
 const (
 	issueTracker = "https://github.com/Matt3o12/dict-cc/issues"
+
+	// DictBaseURL The base url of dict.cc
+	DictBaseURL = "http://dict.cc/"
+
+	// AllLangaugesGet URL where all available langauge pairs can be found.
+	AllLangaugesGet = "http://browse.dict.cc/"
+
+	allAvaiableLangsCSSPath = "#maincontent form[name='langbarchooser'] " +
+		"table td a"
 )
 
 func handleErr(err error) {
@@ -27,7 +36,7 @@ func updateLanguages() {
 		return
 	}
 
-	langs, err := GetLanguages(response)
+	langs, err := GetLanguagesFromRemote(response)
 	if err != nil {
 		handleErr(err)
 		return

@@ -58,7 +58,7 @@ func fatalOnNil(t *testing.T, msg string, err error) {
 	}
 }
 
-func TestGetLanguages(t *testing.T) {
+func TestGetLanguagesFromRemote(t *testing.T) {
 	content, err := ioutil.ReadFile("resources/browse.dict.cc.html")
 	fatalOnNil(t, "Error reading file.", err)
 
@@ -66,18 +66,18 @@ func TestGetLanguages(t *testing.T) {
 	fatalOnNil(t, "Unexpected error parsing url", err)
 
 	response := httpTesting.GetHTTPResponse(200, uri, string(content))
-	langs, err := GetLanguages(response)
+	langs, err := GetLanguagesFromRemote(response)
 	assert.Nil(t, err)
 	assert.Equal(t, 50, len(langs))
 }
 
-func TestGetLanguagesNilResponse(t *testing.T) {
-	result, err := GetLanguages(nil)
+func TestGetLanguagesFromRemoteNilResponse(t *testing.T) {
+	result, err := GetLanguagesFromRemote(nil)
 	assert.Nil(t, result)
 	assert.EqualError(t, err, "Response is nil pointer")
 }
 
-func TestGetLanguagesOutdatedFormat(t *testing.T) {
+func TestGetLanguagesFromRemoteOutdatedFormat(t *testing.T) {
 	content, err := ioutil.ReadFile("resources/browse-error.dict.cc.html")
 	fatalOnNil(t, "Error reading file.", err)
 
@@ -85,7 +85,7 @@ func TestGetLanguagesOutdatedFormat(t *testing.T) {
 	fatalOnNil(t, "Unexpected error parsing url", err)
 
 	response := httpTesting.GetHTTPResponse(200, uri, string(content))
-	langs, err := GetLanguages(response)
+	langs, err := GetLanguagesFromRemote(response)
 	assert.Nil(t, langs)
 	assert.EqualError(t, err, "Unkown language format: 'English | "+
 		"Slovak'. Are you using the latest version?")

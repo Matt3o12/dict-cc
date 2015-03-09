@@ -8,17 +8,6 @@ import (
 	"github.com/PuerkitoBio/goquery"
 )
 
-const (
-	// DictBaseURL The base url of dict.cc
-	DictBaseURL = "http://dict.cc/"
-
-	// AllLangaugesGet URL where all available langauge pairs can be found.
-	AllLangaugesGet = "http://browse.dict.cc/"
-
-	allAvaiableLangsCSSPath = "#maincontent form[name='langbarchooser'] " +
-		"table td a"
-)
-
 // A Language which includes the localized (English) and native
 // version of the language
 type Language string
@@ -45,9 +34,9 @@ func (l LanguagePair) String() string {
 	return fmt.Sprintf("{%v - %v}", l.first, l.second)
 }
 
-// GetLanguages returns all avaiable
+// GetLanguagesFromRemote returns all avaiable
 // languages found in the response.
-func GetLanguages(response *http.Response) ([]LanguagePair, error) {
+func GetLanguagesFromRemote(response *http.Response) ([]LanguagePair, error) {
 	doc, err := goquery.NewDocumentFromResponse(response)
 	if err != nil {
 		return nil, err
