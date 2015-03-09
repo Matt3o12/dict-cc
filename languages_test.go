@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"fmt"
 	"io/ioutil"
 	"net/url"
 	"strings"
@@ -101,17 +102,29 @@ func TestUpdateLanguagesIntregration(t *testing.T) {
 	updateLanguages()
 }
 
-// TOOD: Add support for versionizing the languages.
+func loadLangs(rawData string) ([]LanguagePair, error) {
+	return LoadLanguagesFromDisk(strings.NewReader(rawData))
+}
+
 func TestLoadLanguagesFromDisk(t *testing.T) {
-	data := `[{"First":"German123","Second":"English321"},` +
-		`{"First":"German","Second":"Russian"}]`
-	langs, err := LoadLanguagesFromDisk(strings.NewReader(data))
+	data := `{"Version":0,"Pairs":[{"First":"German123","Second":` +
+		`"English321"},{"First":"German","Second":"Russian"}]}`
+
+	langs, err := loadLangs(data)
 	assert.Nil(t, err)
 	expected := []LanguagePair{
-		LanguagePair{"German123", "English321"},
-		LanguagePair{"German", "Russian"},
+		{"German123", "English321"},
+		{"German", "Russian"},
 	}
 	assert.Equal(t, langs, expected)
+}
+
+func TestLoadLanguageFromDiskOldVersion(t *testing.T) {
+	data := `{"Version":-1,"Pairs":[{"First":"German123","Second":` +
+		`"English321"},{"First":"German","Second":"Russian"}]}`
+	langs, err := loadLangs(data)
+	assert.Equal(t, err, ErrOutdatedLanguageFile)
+	assert.Nil(t, langs)
 }
 
 func TestSaveLanguages(t *testing.T) {
@@ -123,7 +136,8 @@ func TestSaveLanguages(t *testing.T) {
 
 	err := SaveLanguagesToDisk(langs, buf)
 	assert.Nil(t, err)
-	expected := `[{"First":"German","Second":"English"},` +
-		`{"First":"German","Second":"Spanish"}]`
+	expected := `{"Version":%v,"Pairs":[{"First":"German","Second":"English"},` +
+		`{"First":"German","Second":"Spanish"}]}`
+	expected = fmt.Sprintf(expected, languageFileVersion)
 	assert.Equal(t, strings.TrimSpace(buf.String()), expected)
 }

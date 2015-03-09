@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -9,6 +10,11 @@ import (
 
 	"github.com/PuerkitoBio/goquery"
 )
+
+// OutdatedLanguageFileError is used to indecate that the
+// language file needs updating
+var ErrOutdatedLanguageFile = errors.New(
+	"The language pair file needs updating.")
 
 const languageFileVersion = 0
 
@@ -19,6 +25,11 @@ type Language string
 // A LanguagePair consists of two langauges.
 type LanguagePair struct {
 	First, Second Language
+}
+
+type languageFileFormat struct {
+	Version int
+	Pairs   []LanguagePair
 }
 
 // Same checks whether the current language pair equals the other one.
@@ -41,16 +52,21 @@ func (l LanguagePair) String() string {
 // LoadLanguagesFromDisk loads all languages from the disk.
 func LoadLanguagesFromDisk(reader io.Reader) ([]LanguagePair, error) {
 	decoder := json.NewDecoder(reader)
-	var langs []LanguagePair
-	err := decoder.Decode(&langs)
+	var data languageFileFormat
+	if err := decoder.Decode(&data); err != nil {
+		return nil, err
+	} else if data.Version != languageFileVersion {
+		return nil, ErrOutdatedLanguageFile
+	}
 
-	return langs, err
+	return data.Pairs, nil
 }
 
 // SaveLanguagesToDisk saves the language to disk (or the given writer).
 func SaveLanguagesToDisk(langs []LanguagePair, writer io.Writer) error {
+	data := languageFileFormat{Version: languageFileVersion, Pairs: langs}
 	encoder := json.NewEncoder(writer)
-	return encoder.Encode(langs)
+	return encoder.Encode(data)
 }
 
 // GetLanguagesFromRemote returns all avaiable
