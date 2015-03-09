@@ -1,8 +1,10 @@
 package main
 
 import (
+	"bytes"
 	"io/ioutil"
 	"net/url"
+	"strings"
 	"testing"
 
 	"github.com/matt3o12/dict-cc/httpTesting"
@@ -97,4 +99,31 @@ func TestUpdateLanguagesIntregration(t *testing.T) {
 	}
 
 	updateLanguages()
+}
+
+// TOOD: Add support for versionizing the languages.
+func TestLoadLanguagesFromDisk(t *testing.T) {
+	data := `[{"First":"German123","Second":"English321"},` +
+		`{"First":"German","Second":"Russian"}]`
+	langs, err := LoadLanguagesFromDisk(strings.NewReader(data))
+	assert.Nil(t, err)
+	expected := []LanguagePair{
+		LanguagePair{"German123", "English321"},
+		LanguagePair{"German", "Russian"},
+	}
+	assert.Equal(t, langs, expected)
+}
+
+func TestSaveLanguages(t *testing.T) {
+	buf := new(bytes.Buffer)
+	langs := []LanguagePair{
+		LanguagePair{"German", "English"},
+		LanguagePair{"German", "Spanish"},
+	}
+
+	err := SaveLanguagesToDisk(langs, buf)
+	assert.Nil(t, err)
+	expected := `[{"First":"German","Second":"English"},` +
+		`{"First":"German","Second":"Spanish"}]`
+	assert.Equal(t, strings.TrimSpace(buf.String()), expected)
 }
