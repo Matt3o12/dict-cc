@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"os"
 	"path"
@@ -33,10 +34,33 @@ const (
 	Email = "info@matt3o12.de"
 )
 
+// Writer used for prints
+var OutputWriter io.Writer = os.Stdout
+
+func echo(a ...interface{}) int {
+	b, err := fmt.Fprintln(OutputWriter, a...)
+	if err != nil {
+		// I really have no idea how I'm supposed to handle a print error.
+		// I can't even notify the user!
+		panic(err)
+	}
+
+	return b
+}
+
+func echof(format string, a ...interface{}) int {
+	b, err := fmt.Fprintf(OutputWriter, format, a...)
+	if err != nil {
+		panic(err)
+	}
+
+	return b
+}
+
 func handleErr(err error) {
 	if err != nil {
-		fmt.Println(err)
-		fmt.Printf("If you believe that is a bug, please open a ticket at %v.\n",
+		echo(err)
+		echof("If you believe that is a bug, please open a ticket at %v.\n",
 			issueTracker)
 		os.Exit(1)
 
@@ -59,9 +83,9 @@ func getLangSaveFile() (string, error) {
 }
 
 func updateLanguages() {
-	fmt.Println("Available languages are being updated.")
-	fmt.Println("This may take a while ...")
-	fmt.Println()
+	echo("Available languages are being updated.")
+	echo("This may take a while ...")
+	echo()
 
 	response, err := http.Get(AllLangaugesGet)
 	handleErr(err)
@@ -69,7 +93,7 @@ func updateLanguages() {
 	langs, err := GetLanguagesFromRemote(response)
 	handleErr(err)
 
-	fmt.Printf("Total langs: %v\n", len(langs))
+	echof("Total langs: %v\n", len(langs))
 
 	fileName, err := getLangSaveFile()
 	handleErr(err)
@@ -83,8 +107,8 @@ func updateLanguages() {
 
 func updateLanguagesCommand(c *cli.Context) {
 	if len(c.Args()) > 0 {
-		fmt.Println("You may not set additional commands.")
-		fmt.Println()
+		echo("You may not set additional commands.")
+		echo()
 
 		cli.ShowSubcommandHelp(c)
 		os.Exit(1)
@@ -98,10 +122,11 @@ func lookupCommand(c *cli.Context) {
 	handleErr(err)
 
 	if stats, err := os.Stat(langFile); err != nil || !stats.Mode().IsRegular() {
-		fmt.Println("This is your first usage.")
+		echo("This is your first usage.")
 		updateLanguages()
 	}
 
+	echo("Ok...")
 	// Code for looking up words goes here.
 }
 

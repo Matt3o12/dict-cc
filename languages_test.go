@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/matt3o12/dict-cc/httpTesting"
+	"github.com/matt3o12/dict-cc/plusTesting"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -68,7 +68,7 @@ func TestGetLanguagesFromRemote(t *testing.T) {
 	uri, err := url.Parse(AllLangaugesGet)
 	fatalOnNil(t, "Unexpected error parsing url", err)
 
-	response := httpTesting.GetHTTPResponse(200, uri, string(content))
+	response := plusTesting.GetHTTPResponse(200, uri, string(content))
 	langs, err := GetLanguagesFromRemote(response)
 	assert.Nil(t, err)
 	assert.Equal(t, 50, len(langs))
@@ -87,19 +87,11 @@ func TestGetLanguagesFromRemoteOutdatedFormat(t *testing.T) {
 	uri, err := url.Parse(AllLangaugesGet)
 	fatalOnNil(t, "Unexpected error parsing url", err)
 
-	response := httpTesting.GetHTTPResponse(200, uri, string(content))
+	response := plusTesting.GetHTTPResponse(200, uri, string(content))
 	langs, err := GetLanguagesFromRemote(response)
 	assert.Nil(t, langs)
 	assert.EqualError(t, err, "Unkown language format: 'English | "+
 		"Slovak'. Are you using the latest version?")
-}
-
-func TestUpdateLanguagesIntregration(t *testing.T) {
-	if testing.Short() {
-		t.Skip("Integration test")
-	}
-
-	updateLanguages()
 }
 
 func loadLangs(rawData string) ([]LanguagePair, error) {
