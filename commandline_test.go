@@ -56,6 +56,6 @@ func TestUpdateLanguagesIntregration(t *testing.T) {
 	updateLanguages()
 	info, err := os.Stat(path.Join(tmpdir, ".dict_cc", "languages.json"))
 	if assert.NoError(t, err) {
-		assert.True(t, info.Size() < 100)
+		assert.True(t, info.Size() > 100)
 	}
 }
