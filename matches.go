@@ -10,8 +10,8 @@ type LanguageResult struct {
 	Pair    LanguagePair
 }
 
-// FindMatch finds all results on the result page.
-func FindResult(response *http.Response) (*LanguageResult, error) {
+// FindResults finds all results on the result page.
+func FindResults(response *http.Response) (*LanguageResult, error) {
 
 	return nil, nil
 }

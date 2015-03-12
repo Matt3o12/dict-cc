@@ -16,11 +16,26 @@ import (
 var ErrOutdatedLanguageFile = errors.New(
 	"The language pair file needs updating.")
 
-const languageFileVersion = 0
+const (
+	// AllLangaugesGet URL where all available langauge pairs can be found.
+	AllLangaugesGet = "http://browse.dict.cc/"
+
+	allAvaiableLangsCSSPath = "#maincontent form[name='langbarchooser'] " +
+		"table td a"
+
+	languageFileVersion = 1
+)
 
 // A Language which includes the localized (English) and native
 // version of the language
-type Language string
+type Language struct {
+	Name   string
+	Abbrev string
+}
+
+func (l Language) String() string {
+	return l.Name
+}
 
 // A LanguagePair consists of two langauges.
 type LanguagePair struct {
@@ -53,9 +68,8 @@ func (l LanguagePair) String() string {
 func LoadLanguagesFromDisk(reader io.Reader) ([]LanguagePair, error) {
 	decoder := json.NewDecoder(reader)
 	var data languageFileFormat
-	if err := decoder.Decode(&data); err != nil {
-		return nil, err
-	} else if data.Version != languageFileVersion {
+	// Fixme: data.Version branch is not tested.
+	if err := decoder.Decode(&data); err != nil && data.Version != languageFileVersion {
 		return nil, ErrOutdatedLanguageFile
 	}
 
@@ -99,14 +113,27 @@ func GetLanguagesFromRemote(response *http.Response) ([]LanguagePair, error) {
 }
 
 func getLanguagePairFromString(s string) (*LanguagePair, error) {
+	firstS, secondS, err := splitLangauge(s)
+	if err != nil {
+		return nil, err
+	}
+
+	first := Language{Name: firstS, Abbrev: firstS[:2]}
+	second := Language{Name: secondS, Abbrev: secondS[:2]}
+	pair := &LanguagePair{first, second}
+
+	return pair, nil
+}
+
+func splitLangauge(s string) (first, second string, err error) {
 	split := strings.Split(s, "–") // that's not a normal hython ('-').
 	if len(split) != 2 {
-		return nil, fmt.Errorf("Unkown language format: '%v'. "+
+		return "", "", fmt.Errorf("Unkown language format: '%v'. "+
 			"Are you using the latest version?", s)
 	}
 
-	first := Language(strings.TrimSpace(split[0]))
-	second := Language(strings.TrimSpace(split[1]))
-	pair := &LanguagePair{first, second}
-	return pair, nil
+	first = strings.TrimSpace(split[0])
+	second = strings.TrimSpace(split[1])
+
+	return
 }

@@ -18,12 +18,6 @@ const (
 	// DictBaseURL The base url of dict.cc
 	DictBaseURL = "http://dict.cc/"
 
-	// AllLangaugesGet URL where all available langauge pairs can be found.
-	AllLangaugesGet = "http://browse.dict.cc/"
-
-	allAvaiableLangsCSSPath = "#maincontent form[name='langbarchooser'] " +
-		"table td a"
-
 	// Version current version
 	Version = "0.0.0"
 

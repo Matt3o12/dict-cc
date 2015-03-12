@@ -12,11 +12,20 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func makePair(first, second string) (pair LanguagePair) {
+	firstL := Language{first, strings.ToLower(first[:2])}
+	secondL := Language{second, strings.ToLower(second[:2])}
+
+	pair = LanguagePair{firstL, secondL}
+	return
+}
+
 func TestGetLanguagePairFromString(t *testing.T) {
 	result, err := getLanguagePairFromString("German – English")
 	assert.Nil(t, err)
 
-	expected := LanguagePair{"German", "English"}
+	l1, l2 := Language{"German", "Ge"}, Language{"English", "En"}
+	expected := LanguagePair{l1, l2}
 	assert.True(t, result.Same(expected))
 }
 
@@ -30,27 +39,27 @@ func TestGetLanguagePairFromStringFail(t *testing.T) {
 }
 
 func TestLanguagePairString(t *testing.T) {
-	pair := LanguagePair{"German", "English"}
+	pair := makePair("German", "English")
 	assert.Equal(t, "{German - English}", pair.String())
 }
 
 func TestLanguagePairSame(t *testing.T) {
-	pair1 := LanguagePair{"German", "English"}
-	pair2 := LanguagePair{"German", "English"}
+	pair1 := makePair("German", "English")
+	pair2 := makePair("German", "English")
 	assert.True(t, pair1.Same(pair2))
 	assert.True(t, pair2.Same(pair1))
 }
 
 func TestLanguagePairSameSwapped(t *testing.T) {
-	pair1 := LanguagePair{"German", "English"}
-	pair2 := LanguagePair{"English", "German"}
+	pair1 := makePair("German", "English")
+	pair2 := makePair("English", "German")
 	assert.True(t, pair1.Same(pair2))
 	assert.True(t, pair2.Same(pair1))
 }
 
 func TestLanguagePairSameFail(t *testing.T) {
-	pair1 := LanguagePair{"German", "English"}
-	pair2 := LanguagePair{"German", "Spanish"}
+	pair1 := makePair("German", "English")
+	pair2 := makePair("German", "Spanish")
 	assert.False(t, pair1.Same(pair2))
 	assert.False(t, pair2.Same(pair1))
 }
@@ -99,14 +108,16 @@ func loadLangs(rawData string) ([]LanguagePair, error) {
 }
 
 func TestLoadLanguagesFromDisk(t *testing.T) {
-	data := `{"Version":0,"Pairs":[{"First":"German123","Second":` +
-		`"English321"},{"First":"German","Second":"Russian"}]}`
+	data := `{"Version":1,"Pairs":[{"First":{"Name":"German123","Abbrev":` +
+		`"ge"},"Second":{"Name":"English321","Abbrev":"en"}},{"First":` +
+		`{"Name":"German","Abbrev":"ge"},"Second":{"Name":"Russian",` +
+		`"Abbrev":"ru"}}]}`
 
 	langs, err := loadLangs(data)
 	assert.Nil(t, err)
 	expected := []LanguagePair{
-		{"German123", "English321"},
-		{"German", "Russian"},
+		makePair("German123", "English321"),
+		makePair("German", "Russian"),
 	}
 	assert.Equal(t, langs, expected)
 }
@@ -122,14 +133,16 @@ func TestLoadLanguageFromDiskOldVersion(t *testing.T) {
 func TestSaveLanguages(t *testing.T) {
 	buf := new(bytes.Buffer)
 	langs := []LanguagePair{
-		LanguagePair{"German", "English"},
-		LanguagePair{"German", "Spanish"},
+		makePair("German", "English"),
+		makePair("German", "Spanish"),
 	}
 
 	err := SaveLanguagesToDisk(langs, buf)
 	assert.Nil(t, err)
-	expected := `{"Version":%v,"Pairs":[{"First":"German","Second":"English"},` +
-		`{"First":"German","Second":"Spanish"}]}`
+	expected := `{"Version":%v,"Pairs":[{"First":{"Name":"German","Abbrev":` +
+		`"ge"},"Second":{"Name":"English","Abbrev":"en"}},{"First":` +
+		`{"Name":"German","Abbrev":"ge"},"Second":{"Name":"Spanish",` +
+		`"Abbrev":"sp"}}]}`
 	expected = fmt.Sprintf(expected, languageFileVersion)
 	assert.Equal(t, strings.TrimSpace(buf.String()), expected)
 }

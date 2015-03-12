@@ -39,6 +39,7 @@ func testRedirectOutput(t *testing.T) {
 	assert.Equal(t, os.Stdout, OutputWriter)
 }
 
+// FIXME: check if the json format is valid.
 func TestUpdateLanguagesIntregration(t *testing.T) {
 	if testing.Short() {
 		t.Skip("Integration test")
