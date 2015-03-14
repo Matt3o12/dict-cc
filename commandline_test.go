@@ -39,6 +39,41 @@ func testRedirectOutput(t *testing.T) {
 	assert.Equal(t, os.Stdout, OutputWriter)
 }
 
+func noopExitHandler(code int) {
+
+}
+
+func patchExitHandler() func() {
+	backup := GetExitHandler()
+	SetExitHandler(noopExitHandler)
+
+	return func() {
+		SetExitHandler(backup)
+	}
+}
+
+func TestSetErrorHandler(t *testing.T) {
+	assert.Equal(t, exitHandler, GetExitHandler())
+	assert.Equal(t, osExitHandler, GetExitHandler())
+
+	backup := GetExitHandler()
+	SetExitHandler(noopExitHandler)
+	assert.Equal(t, noopExitHandler, GetExitHandler())
+	assert.Equal(t, noopExitHandler, exitHandler)
+	SetExitHandler(backup)
+}
+
+func TestPatchExitHandler(t *testing.T) {
+	old := GetExitHandler()
+	assert.NotEmpty(t, noopExitHandler, old)
+
+	deferFunc := patchExitHandler()
+	assert.Equal(t, noopExitHandler, GetExitHandler())
+
+	deferFunc()
+	assert.Equal(t, old, GetExitHandler())
+}
+
 // FIXME: check if the json format is valid.
 func TestUpdateLanguagesIntregration(t *testing.T) {
 	if testing.Short() {
@@ -53,7 +88,9 @@ func TestUpdateLanguagesIntregration(t *testing.T) {
 	defer os.RemoveAll(tmpdir)
 	defer plusTesting.ChangeEnv("HOME", tmpdir)()
 	defer RedirectOutput(t)()
+	defer patchExitHandler()()
 
+	assert.Equal(t, noopExitHandler, exitHandler)
 	updateLanguages()
 	info, err := os.Stat(path.Join(tmpdir, ".dict_cc", "languages.json"))
 	if assert.NoError(t, err) {

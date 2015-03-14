@@ -28,6 +28,26 @@ const (
 	Email = "info@matt3o12.de"
 )
 
+var exitHandler = osExitHandler
+
+// SetExitHandler Sets the default error handler
+func SetExitHandler(handler func(int)) {
+	exitHandler = handler
+}
+
+// GetExitHandler Returns the error handler
+func GetExitHandler() func(int) {
+	return exitHandler
+}
+
+func handleExit(code int) {
+	exitHandler(code)
+}
+
+func osExitHandler(code int) {
+	os.Exit(code)
+}
+
 // Writer used for prints
 var OutputWriter io.Writer = os.Stdout
 
@@ -56,8 +76,7 @@ func handleErr(err error) {
 		echo(err)
 		echof("If you believe that is a bug, please open a ticket at %v.\n",
 			issueTracker)
-		os.Exit(1)
-
+		handleExit(1)
 	}
 }
 
@@ -105,7 +124,7 @@ func updateLanguagesCommand(c *cli.Context) {
 		echo()
 
 		cli.ShowSubcommandHelp(c)
-		os.Exit(1)
+		handleExit(1)
 	}
 
 	updateLanguages()
@@ -144,5 +163,5 @@ func main() {
 	}
 
 	app.Run(os.Args)
-	os.Exit(0)
+	handleExit(0)
 }
