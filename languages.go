@@ -70,11 +70,18 @@ func (l LanguagePair) Same(other LanguagePair) bool {
 		first2, first1 = first1, first2
 	}
 
-	return (first1 == first2 && second1 == second2) || (first1 == second1 && first2 == second2)
+	return (first1 == first2 && second1 == second2) ||
+		(first1 == second1 && first2 == second2)
 }
 
 func (l LanguagePair) String() string {
 	return fmt.Sprintf("{%v - %v}", l.First, l.Second)
+}
+
+// Iterator returns the first and second pair as a slice.
+// That is useful for iterating through the array.
+func (l LanguagePair) Iterator() []Language {
+	return []Language{l.First, l.Second}
 }
 
 // LoadLanguagesFromDisk loads all languages from the disk.
@@ -82,7 +89,8 @@ func LoadLanguagesFromDisk(reader io.Reader) ([]LanguagePair, error) {
 	decoder := json.NewDecoder(reader)
 	var data languageFileFormat
 	// Fixme: data.Version branch is not tested.
-	if err := decoder.Decode(&data); err != nil && data.Version != languageFileVersion {
+	if err := decoder.Decode(&data); err != nil &&
+		data.Version != languageFileVersion {
 		return nil, ErrOutdatedLanguageFile
 	}
 
@@ -96,14 +104,15 @@ func SaveLanguagesToDisk(langs []LanguagePair, writer io.Writer) error {
 	return encoder.Encode(data)
 }
 
-func getPairsFromSelectors(firstLang Language, results []LanguagePair) func(int, *goquery.Selection) {
+func getPairsFromSelectors(firstLang Language, results []LanguagePair) func(
+	int, *goquery.Selection) {
 	return func(n int, selection *goquery.Selection) {
 
 	}
 }
 
-// makeError creates a new error using message and returns the reference. That is a
-// workaround for
+// makeError creates a new error using message and returns the reference.
+// That is a workaround for
 // https://groups.google.com/forum/#!topic/golang-nuts/OGshFH1Z-Mc
 func makeError(message string) *error {
 	err := errors.New(message)

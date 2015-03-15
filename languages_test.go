@@ -178,3 +178,12 @@ func TestGetAbbrevTooFewManyVales(t *testing.T) {
 	AssertInvalidMatches(t)
 	AssertInvalidMatches(t, "de", "en", "ru")
 }
+
+func TestLanguagePairIterator(t *testing.T) {
+	l1, l2 := Language{"German", "de"}, Language{"English", "en"}
+	pair := LanguagePair{l1, l2}
+	iter := pair.Iterator()
+	assert.Equal(t, 2, len(iter))
+	assert.Equal(t, l1, iter[0])
+	assert.Equal(t, l2, iter[1])
+}

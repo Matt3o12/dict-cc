@@ -2,7 +2,8 @@ package main
 
 import (
 	"fmt"
-	"net/http"
+	"net/url"
+	"strings"
 )
 
 // LanguageResult represents the result when you looked up
@@ -13,11 +14,20 @@ type LanguageResult struct {
 	Pair    LanguagePair
 }
 
-const DictCCWorldLookupPatch = "http://%v.dict.cc/?s=%v"
+// Path used for looking up words.
+const DictCCWorldLookupPatch = "http://%v%v.dict.cc/?s=%v"
 
-// FindResults finds all results on the result page.
-func FindResults(response *http.Response) (*LanguageResult, error) {
-	_ = fmt.Sprintf(DictCCWorldLookupPatch)
+func escapeSearchTerm(searchTerm string) string {
+	searchTerm = url.QueryEscape(searchTerm)
 
-	return nil, nil
+	return strings.Replace(searchTerm, "%2B", "+", -1)
+}
+
+// GetLookupURLForSearchTerm generates the urls used for looking up
+// the search term `searchTerm` in the given language
+func GetLookupURLForSearchTerm(pair LanguagePair, searchTerm string) string {
+	searchTerm = escapeSearchTerm(searchTerm)
+	a1, a2 := pair.First.Abbrev, pair.Second.Abbrev
+
+	return fmt.Sprintf(DictCCWorldLookupPatch, a1, a2, searchTerm)
 }
