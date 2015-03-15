@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"regexp"
 	"strings"
 
 	"github.com/PuerkitoBio/goquery"
@@ -18,12 +19,24 @@ var ErrOutdatedLanguageFile = errors.New(
 
 const (
 	// AllLangaugesGet URL where all available langauge pairs can be found.
-	AllLangaugesGet = "http://browse.dict.cc/"
+	AllLangaugesGet = "http://www.dict.cc/"
 
-	allAvaiableLangsCSSPath = "#maincontent form[name='langbarchooser'] " +
-		"table td a"
+	allLangsCSSBasePath = "#maincontent table:nth-child(7) tr:nth-child(2)"
+	englishPairCSSPath  = "td:nth-child(1) a"
+	germanPairCSSPath   = "td:nth-child(2) a"
 
-	languageFileVersion = 1
+	abbrevFinderRegex    = `^http\:\/\/([a-zA-Z]{2})([a-zA-Z]{2})\.dict\.cc`
+	abbrevSpecialCaseWWW = `^http\:\/\/www\.dict\.cc`
+
+	languageFileVersion = 2
+
+	parsingErrorStr = "There was an error " +
+		"parsing the page. Are you using the latest version? (Error-ID: %v)"
+)
+
+var (
+	germanLang  = Language{"Deutsch", "de"}
+	englishLang = Language{"English", "en"}
 )
 
 // A Language which includes the localized (English) and native
@@ -83,6 +96,25 @@ func SaveLanguagesToDisk(langs []LanguagePair, writer io.Writer) error {
 	return encoder.Encode(data)
 }
 
+func getPairsFromSelectors(firstLang Language, results []LanguagePair) func(int, *goquery.Selection) {
+	return func(n int, selection *goquery.Selection) {
+
+	}
+}
+
+// makeError creates a new error using message and returns the reference. That is a
+// workaround for
+// https://groups.google.com/forum/#!topic/golang-nuts/OGshFH1Z-Mc
+func makeError(message string) *error {
+	err := errors.New(message)
+	return &err
+}
+
+func makeParsingError(id int) *error {
+	msg := fmt.Sprintf(parsingErrorStr, id)
+	return makeError(msg)
+}
+
 // GetLanguagesFromRemote returns all avaiable
 // languages found in the response.
 func GetLanguagesFromRemote(response *http.Response) ([]LanguagePair, error) {
@@ -91,25 +123,64 @@ func GetLanguagesFromRemote(response *http.Response) ([]LanguagePair, error) {
 		return nil, err
 	}
 
+	base := doc.Find(allLangsCSSBasePath)
+	pairPathes := map[string]Language{
+		englishPairCSSPath: englishLang,
+		germanPairCSSPath:  germanLang,
+	}
+
 	var pairs []LanguagePair
 	var langErr *error
+	urlRegex := regexp.MustCompile(abbrevFinderRegex)
+	urlRegexWWW := regexp.MustCompile(abbrevSpecialCaseWWW)
 
-	doc.Find(allAvaiableLangsCSSPath).Each(
-		func(i int, s *goquery.Selection) {
-			lang, err := getLanguagePairFromString(s.Text())
+	pairs = append(pairs, LanguagePair{germanLang, englishLang})
+	for path, firstLang := range pairPathes {
+		results := base.Find(path)
+		results.Each(func(i int, s *goquery.Selection) {
 			if err != nil {
-				langErr = &err
 				return
 			}
 
-			pairs = append(pairs, *lang)
+			link, exists := s.Attr("href")
+			if !exists {
+				langErr = makeParsingError(1)
+				return
+			}
+
+			matches := urlRegex.FindStringSubmatch(link)
+			if len(matches) == 3 {
+				abbrev, err := getAbbrev(firstLang, matches[1:])
+				if err != nil {
+					panic(err)
+				}
+
+				secondLange := Language{strings.TrimSpace(s.Text()), abbrev}
+				pairs = append(pairs, LanguagePair{firstLang, secondLange})
+			} else if !urlRegexWWW.MatchString(link) {
+				langErr = makeParsingError(2)
+			}
 		})
+	}
 
 	if langErr != nil {
 		return nil, *langErr
 	}
 
 	return pairs, nil
+}
+
+func getAbbrev(firstLang Language, matches []string) (string, error) {
+	if len(matches) != 2 {
+		return "", fmt.Errorf("Too many/few matches given (matches: %v).", matches)
+	}
+
+	first, second := matches[0], matches[1]
+	if first == firstLang.Abbrev {
+		return second, nil
+	}
+
+	return first, nil
 }
 
 func getLanguagePairFromString(s string) (*LanguagePair, error) {

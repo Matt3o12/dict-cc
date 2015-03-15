@@ -71,7 +71,7 @@ func fatalOnNil(t *testing.T, msg string, err error) {
 }
 
 func TestGetLanguagesFromRemote(t *testing.T) {
-	content, err := ioutil.ReadFile("resources/browse.dict.cc.html")
+	content, err := ioutil.ReadFile("resources/www.dict.cc.html")
 	fatalOnNil(t, "Error reading file.", err)
 
 	uri, err := url.Parse(AllLangaugesGet)
@@ -80,7 +80,7 @@ func TestGetLanguagesFromRemote(t *testing.T) {
 	response := plusTesting.GetHTTPResponse(200, uri, string(content))
 	langs, err := GetLanguagesFromRemote(response)
 	assert.Nil(t, err)
-	assert.Equal(t, 50, len(langs))
+	assert.Equal(t, 51, len(langs))
 }
 
 func TestGetLanguagesFromRemoteNilResponse(t *testing.T) {
@@ -90,7 +90,7 @@ func TestGetLanguagesFromRemoteNilResponse(t *testing.T) {
 }
 
 func TestGetLanguagesFromRemoteOutdatedFormat(t *testing.T) {
-	content, err := ioutil.ReadFile("resources/browse-error.dict.cc.html")
+	content, err := ioutil.ReadFile("resources/www-error.dict.cc.html")
 	fatalOnNil(t, "Error reading file.", err)
 
 	uri, err := url.Parse(AllLangaugesGet)
@@ -99,8 +99,8 @@ func TestGetLanguagesFromRemoteOutdatedFormat(t *testing.T) {
 	response := plusTesting.GetHTTPResponse(200, uri, string(content))
 	langs, err := GetLanguagesFromRemote(response)
 	assert.Nil(t, langs)
-	assert.EqualError(t, err, "Unkown language format: 'English | "+
-		"Slovak'. Are you using the latest version?")
+	assert.EqualError(t, err, "There was an error parsing the page. "+
+		"Are you using the latest version? (Error-ID: 2)")
 }
 
 func loadLangs(rawData string) ([]LanguagePair, error) {
@@ -145,4 +145,36 @@ func TestSaveLanguages(t *testing.T) {
 		`"Abbrev":"sp"}}]}`
 	expected = fmt.Sprintf(expected, languageFileVersion)
 	assert.Equal(t, strings.TrimSpace(buf.String()), expected)
+}
+
+func TestGetAbbrev1(t *testing.T) {
+	firstLang := Language{"English", "en"}
+	matches := []string{"en", "de"}
+
+	abbrev, err := getAbbrev(firstLang, matches)
+	assert.Equal(t, "de", abbrev)
+	assert.NoError(t, err)
+}
+
+func TestGetAbbrev2(t *testing.T) {
+	firstLang := Language{"English", "en"}
+	matches := []string{"de", "en"}
+
+	abbrev, err := getAbbrev(firstLang, matches)
+	assert.Equal(t, "de", abbrev)
+	assert.NoError(t, err)
+}
+
+func AssertInvalidMatches(t *testing.T, matches ...string) {
+
+	abbrev, err := getAbbrev(Language{}, matches)
+	assert.Equal(t, "", abbrev)
+	errMsg := "Too many/few matches given (matches: %v)."
+	assert.EqualError(t, err, fmt.Sprintf(errMsg, matches))
+}
+
+func TestGetAbbrevTooFewManyVales(t *testing.T) {
+	AssertInvalidMatches(t, "de")
+	AssertInvalidMatches(t)
+	AssertInvalidMatches(t, "de", "en", "ru")
 }
